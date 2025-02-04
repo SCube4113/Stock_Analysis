@@ -46,6 +46,14 @@ pip install -r requirements.txt
 - plotly >= 6.0.0
 - streamlit >= 1.41.1
 - yfinance >= 0.2.52
+- websocket-client >= 1.6.4
+- tensorflow >= 2.15.0
+- scikit-learn >= 1.4.0
+- joblib >= 1.3.2
+- beautifulsoup4 >= 4.12.3
+- html5lib >= 1.1
+- lxml >= 5.1.0
+- requests >= 2.31.0
 
 ## Running Locally
 
@@ -55,6 +63,7 @@ pip install -r requirements.txt
 
 ```bash
 streamlit run main.py
+# streamlit run main.py --server.port 5000 --server.address localhost
 ```
 
 3. Open your browser and navigate to `http://localhost:8501`
@@ -102,9 +111,17 @@ stock-analysis-dashboard/
 │   ├── style.css
 │   └── generated-icon.png
 ├── utils/
+│   ├── __init__.py
 │   ├── chart_builder.py
 │   ├── data_fetcher.py
-│   └── metrics_calculator.py
+│   ├── metrics_calculator.py
+│   ├── realtime/
+│   │   ├── __init__.py
+│   │   └── websocket_client.py
+│   └── ml/
+│       ├── __init__.py
+│       ├── price_predictor.py
+│       └── trend_analyzer.py
 ├── main.py
 └── pyproject.toml
 ```
@@ -117,4 +134,3 @@ stock-analysis-dashboard/
 4. Commit your changes (`git commit -am 'Add new feature'`)
 5. Push to the branch (`git push origin feature/improvement`)
 6. Create a Pull Request
-

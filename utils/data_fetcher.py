@@ -5,69 +5,148 @@ import logging
 
 class StockDataFetcher:
     @staticmethod
-    def search_stock_symbols(query, market_type="both"):
-        """Search for stock symbols based on user input"""
-        try:
-            # Define common Indian stock suffixes and indices
-            indian_suffixes = [".NS", ".BO"]
-            indian_indices = {
-                "NIFTY": "^NSEI",
-                "SENSEX": "^BSESN",
-                "NIFTY50": "^NSEI",
-                "BANKNIFTY": "^NSEBANK"
+    def get_symbol_suffix(symbol: str, market: str) -> str:
+        """Add appropriate suffix based on market type"""
+        if market == "Indian Stocks (NSE/BSE)":
+            if not (symbol.endswith('.NS') or symbol.endswith('.BO')):
+                return f"{symbol}.NS"  # Default to NSE
+        elif market == "Cryptocurrency":
+            if not symbol.endswith('-USD'):
+                return f"{symbol}-USD"
+        elif market == "Commodities":
+            if not symbol.endswith('=F'):
+                return f"{symbol}=F"
+        return symbol
+
+    @staticmethod
+    def search_stock_symbols(query: str, market: str) -> list:
+        """Search for symbols based on market type"""
+        suggestions = []
+        
+        if market == "Global Stocks":
+            # Basic global stock suggestions
+            global_stocks = {
+                'AAPL': 'Apple Inc.',
+                'MSFT': 'Microsoft Corporation',
+                'GOOGL': 'Alphabet Inc.',
+                'AMZN': 'Amazon.com Inc.',
+                'META': 'Meta Platforms Inc.',
+                'TSLA': 'Tesla Inc.',
+                'NVDA': 'NVIDIA Corporation',
             }
+            suggestions.extend([
+                {'symbol': sym, 'name': name, 'exchange': 'NASDAQ/NYSE'}
+                for sym, name in global_stocks.items()
+                if query in sym or query.lower() in name.lower()
+            ])
 
-            # First check if it's an index
-            if market_type == "Indian (NSE/BSE)" or market_type == "both":
-                for index_name, symbol in indian_indices.items():
-                    if query.upper() in index_name:
-                        try:
-                            ticker = yf.Ticker(symbol)
-                            info = ticker.info
-                            if info:
-                                return [{
-                                    'symbol': symbol,
-                                    'name': index_name,
-                                    'exchange': 'NSE'
-                                }]
-                        except:
-                            continue
+        elif market == "Indian Stocks (NSE/BSE)":
+            # Indian stock suggestions
+            indian_stocks = {
+                'RELIANCE.NS': 'Reliance Industries',
+                'TCS.NS': 'Tata Consultancy Services',
+                'INFY.NS': 'Infosys Limited',
+                'HDFCBANK.NS': 'HDFC Bank Limited',
+                'WIPRO.NS': 'Wipro Limited',
+                'TATAMOTORS.NS': 'Tata Motors Limited',
+            }
+            suggestions.extend([
+                {'symbol': sym, 'name': name, 'exchange': 'NSE'}
+                for sym, name in indian_stocks.items()
+                if query in sym.replace('.NS', '') or query.lower() in name.lower()
+            ])
 
-            # Try different combinations for Indian stocks
-            suggestions = []
-            if market_type == "Indian (NSE/BSE)" or market_type == "both":
-                for suffix in indian_suffixes:
-                    try:
-                        test_symbol = f"{query.upper()}{suffix}"
-                        ticker = yf.Ticker(test_symbol)
-                        info = ticker.info
-                        if info and 'longName' in info:
-                            suggestions.append({
-                                'symbol': test_symbol,
-                                'name': info['longName'],
-                                'exchange': 'NSE' if suffix == '.NS' else 'BSE'
-                            })
-                    except:
-                        continue
+        elif market == "Cryptocurrency":
+            # Crypto suggestions
+            crypto = {
+                'BTC-USD': 'Bitcoin USD',
+                'ETH-USD': 'Ethereum USD',
+                'USDT-USD': 'Tether USD',
+                'BNB-USD': 'Binance Coin USD',
+                'XRP-USD': 'Ripple USD',
+                'DOGE-USD': 'Dogecoin USD',
+            }
+            suggestions.extend([
+                {'symbol': sym, 'name': name, 'exchange': 'Crypto'}
+                for sym, name in crypto.items()
+                if query in sym.replace('-USD', '') or query.lower() in name.lower()
+            ])
 
-            # For global markets
-            if market_type == "Global" or market_type == "both":
-                try:
-                    ticker = yf.Ticker(query.upper())
-                    info = ticker.info
-                    if info and 'longName' in info:
-                        suggestions.append({
-                            'symbol': query.upper(),
-                            'name': info['longName'],
-                            'exchange': info.get('exchange', 'UNKNOWN')
-                        })
-                except:
-                    pass
+        elif market == "Commodities":
+            # Commodity suggestions
+            commodities = {
+                'GC=F': 'Gold Futures',
+                'SI=F': 'Silver Futures',
+                'CL=F': 'Crude Oil Futures',
+                'NG=F': 'Natural Gas Futures',
+                'ZC=F': 'Corn Futures',
+                'ZW=F': 'Wheat Futures',
+            }
+            suggestions.extend([
+                {'symbol': sym, 'name': name, 'exchange': 'Commodities'}
+                for sym, name in commodities.items()
+                if query in sym.replace('=F', '') or query.lower() in name.lower()
+            ])
 
-            return suggestions
+        return suggestions[:10]  # Limit to top 10 suggestions
+
+    @staticmethod
+    def get_historical_data(symbol: str, period: str = '1mo', interval: str = '1d') -> pd.DataFrame:
+        """Fetch historical data for any market type"""
+        try:
+            ticker = yf.Ticker(symbol)
+            df = ticker.history(period=period, interval=interval)
+            
+            if df.empty:
+                raise ValueError(f"No data found for symbol: {symbol}")
+                
+            return df
         except Exception as e:
-            logging.error(f"Error searching symbols: {str(e)}")
-            return []
+            raise Exception(f"Error fetching data for {symbol}: {str(e)}")
+
+    @staticmethod
+    def get_current_price(symbol: str) -> float:
+        """Get current price for any market type"""
+        try:
+            ticker = yf.Ticker(symbol)
+            return ticker.info.get('regularMarketPrice', 0.0)
+        except:
+            return 0.0
+
+    @staticmethod
+    def get_market_status(market: str) -> bool:
+        """Check if market is currently open"""
+        now = datetime.now()
+        
+        if market == "Cryptocurrency":
+            # Crypto markets are always open
+            return True
+            
+        elif market == "Indian Stocks (NSE/BSE)":
+            # NSE/BSE market hours (IST: 9:15 AM - 3:30 PM, Mon-Fri)
+            if now.weekday() >= 5:  # Weekend
+                return False
+            india_time = now + timedelta(hours=5, minutes=30)  # Convert to IST
+            market_open = india_time.replace(hour=9, minute=15)
+            market_close = india_time.replace(hour=15, minute=30)
+            return market_open <= india_time <= market_close
+            
+        elif market == "Global Stocks":
+            # US market hours (EST: 9:30 AM - 4:00 PM, Mon-Fri)
+            if now.weekday() >= 5:  # Weekend
+                return False
+            est_time = now - timedelta(hours=4)  # Convert to EST
+            market_open = est_time.replace(hour=9, minute=30)
+            market_close = est_time.replace(hour=16, minute=0)
+            return market_open <= est_time <= market_close
+            
+        elif market == "Commodities":
+            # Simplified check for commodities (actual hours vary by commodity)
+            if now.weekday() >= 5:  # Weekend
+                return False
+            return True
+            
+        return False
 
     @staticmethod
     def _try_fetch_data(symbol, period='1mo'):
@@ -140,38 +219,6 @@ class StockDataFetcher:
             return info
         except Exception as e:
             raise Exception(f"Error fetching stock info for {symbol}: {str(e)}")
-
-    @staticmethod
-    def get_historical_data(symbol, period='1y', start_date=None, end_date=None, interval='1d'):
-        """
-        Fetch historical data with custom date range and interval support
-        """
-        try:
-            ticker_symbol = StockDataFetcher.get_valid_symbol(symbol)
-            stock = yf.Ticker(ticker_symbol)
-
-            # Try fetching data
-            if start_date and end_date:
-                hist = stock.history(start=start_date, end=end_date, interval=interval)
-            else:
-                hist = stock.history(period=period, interval=interval)
-
-            # If NSE data fetch fails, try BSE
-            if hist.empty and ticker_symbol.endswith('.NS'):
-                bse_symbol = symbol.replace('.NS', '.BO')
-                stock = yf.Ticker(bse_symbol)
-                if start_date and end_date:
-                    hist = stock.history(start=start_date, end=end_date, interval=interval)
-                else:
-                    hist = stock.history(period=period, interval=interval)
-
-            # Verify we have valid data
-            if hist.empty:
-                raise Exception(f"No historical data available for {symbol}")
-
-            return hist
-        except Exception as e:
-            raise Exception(f"Error fetching historical data for {symbol}: {str(e)}")
 
     @staticmethod
     def get_key_metrics(symbol):
