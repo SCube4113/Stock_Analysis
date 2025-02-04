@@ -1,0 +1,44 @@
+# Virtual Environment
+venv/
+env/
+.env/
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Local development settings
+.env
+*.log
+logs/
+
+# Streamlit specific
+.streamlit/secrets.toml
+
+# Replit specific (if not needed)
+.replit
+replit.nix
+.upm/
+poetry.lock
+.config/
+.breakpoints
+
+# Package manager specific
+uv.lock

@@ -1,0 +1,52 @@
+.stock-metrics {
+    background-color: #1c1c1c;
+    border-radius: 5px;
+    padding: 20px;
+    margin: 10px 0;
+}
+
+.metric-value {
+    color: #00ff87;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.metric-label {
+    color: #a3a3a3;
+    font-size: 14px;
+}
+
+.stButton > button {
+    background-color: #00ff87;
+    color: #1c1c1c;
+    font-weight: bold;
+    width: 100%;
+    margin: 2px 0;
+    padding: 10px;
+    text-align: left;
+    white-space: normal;
+    height: auto;
+}
+
+.stButton > button:hover {
+    background-color: #00cc6a;
+    color: #ffffff;
+}
+
+div[data-testid="stDataFrame"] {
+    background-color: #1c1c1c;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Search related styles */
+.search-suggestion {
+    padding: 8px;
+    margin: 4px 0;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.search-suggestion:hover {
+    background-color: #262730;
+}
