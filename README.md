@@ -118,4 +118,3 @@ stock-analysis-dashboard/
 5. Push to the branch (`git push origin feature/improvement`)
 6. Create a Pull Request
 
-# Stock_Analysis
